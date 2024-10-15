@@ -7,6 +7,7 @@ using Il2CppValkoGames.Labyrinthine.Monsters;
 using Il2CppRandomGeneration.Contracts;
 using Il2CppValkoGames.Labyrinthine.Store;
 using Il2Cpp;
+using static MelonLoader.MelonLogger;
 
 namespace Labyrinthine_Library;
 
@@ -200,23 +201,13 @@ public class LabyrinthineLibrary : MelonMod
     private void init ()
     {
         hasInitialized = true;
-
-        // Get PlayerController
-
-        player = UnityEngine.Object.FindObjectOfType<PlayerController>().gameObject.GetComponent<PlayerControl>().Controller;
-        if (player != null )
+        player = UnityEngine.Object.FindObjectOfType<PlayerControl>();
+        if (player != null)
         {
-            MelonLogger.Msg("Found PlayerController");
-        }
-        else
+            MelonLogger.Msg("Found player");
+        } else
         {
-            MelonLogger.Msg("PlayerController not found");
-            return;
-        }
-
-        if (player.IsJumping)
-        {
-            MelonLogger.Msg("Player has jumped");
+            MelonLogger.Msg("Unable to locate player");
         }
     }
 
@@ -229,6 +220,11 @@ public class LabyrinthineLibrary : MelonMod
         if (!hasInitialized && isInGame)
         {
             init();
+        }
+
+        if (hasInitialized && isInGame && player != null)
+        {
+            MelonLogger.Msg(player.IsJumping);
         }
         
         if (Input.GetKeyDown(KeyCode.Tilde) && isInGame)
