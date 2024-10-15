@@ -195,7 +195,7 @@ public class LabyrinthineLibrary : MelonMod
         return false;
     }
 
-    private PlayerController? player = null;
+    private PlayerControl? player = null;
 
     private void init ()
     {
@@ -203,7 +203,7 @@ public class LabyrinthineLibrary : MelonMod
 
         // Get PlayerController
 
-        player = UnityEngine.Object.FindObjectOfType<PlayerController>().gameObject.GetComponent<PlayerController>();
+        player = UnityEngine.Object.FindObjectOfType<PlayerController>().gameObject.GetComponent<PlayerControl>().Controller;
         if (player != null )
         {
             MelonLogger.Msg("Found PlayerController");
@@ -211,6 +211,12 @@ public class LabyrinthineLibrary : MelonMod
         else
         {
             MelonLogger.Msg("PlayerController not found");
+            return;
+        }
+
+        if (player.IsJumping)
+        {
+            MelonLogger.Msg("Player has jumped");
         }
     }
 
