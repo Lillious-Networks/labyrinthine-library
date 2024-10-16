@@ -1,130 +1,149 @@
 ﻿using MelonLoader;
 using HarmonyLib;
-using Il2CppValkoGames.Labyrinthine.AI;
 using Il2CppValkoGames.Labyrinthine.Saves;
 using UnityEngine;
 using Il2CppValkoGames.Labyrinthine.Monsters;
 using Il2CppRandomGeneration.Contracts;
 using Il2CppValkoGames.Labyrinthine.Store;
-using Il2Cpp;
 using static MelonLoader.MelonLogger;
 using Il2CppValkoGames.Labyrinthine.Misc;
+using Il2Cpp;
 
 namespace Labyrinthine_Library;
+
+public class SharedData
+{
+    public static bool IsInGame { get; set; }
+    public static bool IsInMainMenu { get; set; }
+    public static bool IsNoClip { get; set; }
+    public static bool IsInitialized { get; set; }
+    public static bool HasInitialized { get; set; }
+    public static float NoclipShiftSpeed { get; set; } = 0;
+    public static GameObject? Player { get; set; }
+    public static CharacterController? CharacterController { get; set; }
+    public static PlayerController? PlayerController { get; set; }
+}
 
 public class LabyrinthineLibrary : MelonMod
 {
 
-    public bool isInMainMenu = false;
-    public bool isInitialized = false;
-    public bool hasInitialized = false;
-    public bool isInGame = false;
-    public bool isNoclip = false;
-    public float noclipShiftSpeed = 0;
-    public GameObject? player;
-    public CharacterController? characterController;
+    public readonly bool IsInGame = SharedData.IsInGame;
 
-    public override void OnSceneWasLoaded(int buildIndex, string sceneName)
-    {
-        Msg($"[SCENE LOADED] Name: {sceneName} Index: {buildIndex}");
-    }
+    public readonly bool IsInMainMenu = SharedData.IsInMainMenu;
 
-    public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
-    {
-        Msg($"[SCENE UNLOADED] Name: {sceneName} Index: {buildIndex}");
-    }
+    public readonly bool IsNoClip = SharedData.IsNoClip;
+
+    public readonly bool IsInitialized = SharedData.IsInitialized;
+
+    public readonly bool HasInitialized = SharedData.HasInitialized;
+
+    public readonly float NoclipShiftSpeed = SharedData.NoclipShiftSpeed;
+
+    public readonly GameObject? Player = SharedData.Player;
+
+    public readonly CharacterController? CharacterController = SharedData.CharacterController;
+
+    public readonly PlayerController? PlayerController = SharedData.PlayerController;
+
+    private static bool SetIsInGame (bool value) { return SharedData.IsInGame = value; }
+    private static bool SetIsInMainMenu(bool value) { return SharedData.IsInMainMenu = value; }
+    public bool SetIsNoClip(bool value) { return SharedData.IsNoClip = value; }
+    private static bool SetIsInitialized(bool value) { return SharedData.IsInitialized = value; }
+    private static bool SetHasInitialized(bool value) { return SharedData.HasInitialized = value; }
+    public float SetNoclipShiftSpeed(float value) { return SharedData.NoclipShiftSpeed = value; }
+    private static GameObject? SetPlayer() { return SharedData.Player ?? GameObject.FindGameObjectWithTag("LocalPlayer").gameObject; }
+    private static CharacterController? SetCharacterController() { return SharedData.Player?.GetComponent<CharacterController>(); }
+    private static PlayerController? SetPlayerController() { return SharedData.Player?.GetComponent<PlayerController>(); }
+
+    public override void OnSceneWasLoaded(int buildIndex, string sceneName) { Msg($"[SCENE LOADED] Name: {sceneName} Index: {buildIndex}"); }
+
+    public override void OnSceneWasUnloaded(int buildIndex, string sceneName) { Msg($"[SCENE UNLOADED] Name: {sceneName} Index: {buildIndex}"); }
 
     public override async void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
         Msg($"[SCENE INITIALIZED] Name: {sceneName} Index: {buildIndex}");
 
-        if (sceneName == "Init")
-        {
-            isInitialized = true;
-        }
+        // Set the IsInitialized flag if the game has initialized
+        SetIsInitialized(sceneName == "Init" || false);
 
-        // Determines if the game scene is the MainMenu
-        if (sceneName == "MainMenu")
-        {
-            isInMainMenu = true;
-        }
-        else
-        {
-            isInMainMenu = false;
-        }
+        // Set the isInMainMenu flag if in the main menu
+        SetIsInMainMenu(sceneName == "MainMenu" || false);
 
-        // Determ
+        // Maps are typically after the 5th index - does not work
+        // TODO: Fix
         if (buildIndex > 5)
         {
             await Task.Delay(5000);
-            hasInitialized = true;
-            isInGame = true;
-            player = GameObject.FindGameObjectWithTag("LocalPlayer").gameObject;
-            characterController = player.GetComponent<CharacterController>();
-            if (player == null)
+            SetHasInitialized(true);
+            SetIsInGame(true);
+            if (SetPlayer() == null)
             {
-                Msg("Unable to locate player object!");
-                hasInitialized = false;
+                Msg("Unable to locate Player object!");
+                SetHasInitialized(false);
+            } else
+            {
+                SetPlayerController();
+                SetCharacterController();
             }
         }
     }
 
     //  Player Save
 
-    // Add experience to player
+    // Add experience to Player
     public static int AddExperience(int experience)
     {
         PlayerSave.AddExperience(experience, true);
         return GetExperience();
     }
 
-    // Removes experience from the player
+    // Removes experience from the Player
     public static int RemoveExperience(int experience)
     {
         PlayerSave.AddExperience(-experience, true);
         return GetExperience();
     }
 
-    // Adds the number of levels to the player dictated by "level"
+    // Adds the number of levels to the Player dictated by "level"
     public static int AddLevel(int level)
     {
-        // Gives the player the necessary experience for the selected levels added
+        // Gives the Player the necessary experience for the selected levels added
         PlayerSave.AddExperience(PlayerSave.GetExperienceForLevel(PlayerSave.GetLevel() + level), true);
         return GetLevel();
     }
 
-    // Returns the current experience of the player
+    // Returns the current experience of the Player
     public static int GetExperience()
     {
         return PlayerSave.GetExperienceForLevel(PlayerSave.GetLevel());
     }
 
-    // Returns the current level of the player
+    // Returns the current level of the Player
     public static int GetLevel()
     {
         return PlayerSave.GetLevel();
     }
 
-    // Returns if the player skipped the tutorial
+    // Returns if the Player skipped the tutorial
     public static bool SkippedTutorial()
     {
         return PlayerSave.SkippedTutorial;
     }
 
-    // Returns if the player completed the tutorial
+    // Returns if the Player completed the tutorial
     public static bool CompletedTutorial()
     {
         return PlayerSave.CompletedTutorial;
     }
 
-    // Changes whether the player has skipped the tutorial
+    // Changes whether the Player has skipped the tutorial
     public static bool SkipTutorial(bool skip)
     {
         PlayerSave.SkippedTutorial = skip;
         return SkippedTutorial();
     }
 
-    // Changes whether the player has completed the tutorial
+    // Changes whether the Player has completed the tutorial
     public static bool CompleteTutorial(bool complete)
     {
         PlayerSave.CompletedTutorial = complete;
@@ -200,13 +219,6 @@ public class LabyrinthineLibrary : MelonMod
         return CurrencyManager.AvailableCurrency;
     }
 
-    [HarmonyPatch(typeof(AIUtils), "IsInSafezone")]
-    public static bool Prefix(ref bool __result)
-    {
-        __result = true;
-        return false;
-    }
-
     [HarmonyPatch(typeof(CheatingDetector), "isCheating")]
     private static class Patch_CheatDetection
     {
@@ -227,11 +239,10 @@ public class LabyrinthineLibrary : MelonMod
         }
     }
 
-
     public override void OnUpdate()
     {
-        // Return if not initialized
-        if (!isInitialized) return;
+        // Game has not initialized yet
+        if (!IsInitialized) return;
 
         // Disable Anti Cheat
         if (GameObject.Find("Anti-Cheat Toolkit") != null && GameObject.Find("Anti-Cheat Toolkit").activeInHierarchy)
@@ -244,191 +255,5 @@ public class LabyrinthineLibrary : MelonMod
             Msg("Cheating Detected");
             Application.Quit();
         }
-
-        // Return if not in game or is uninitialized due to an error of some sort
-        if (!isInitialized || !isInGame) return;
-
-        /* PLAYER SPECIFIC CODE BEYOND HERE */
-
-        if (Input.GetKeyDown(KeyCode.BackQuote))
-        {
-            // What isNoClip is set to, do the opposite
-            if (characterController == null) return;
-            isNoclip = !isNoclip;
-            characterController.enableOverlapRecovery = !isNoclip;
-            characterController.GetComponent<Collider>().enabled = !isNoclip;
-        }
-
-        if (isNoclip)
-        {
-            if (player == null) return;
-            if (Input.GetKey(KeyCode.LeftShift)) {
-                noclipShiftSpeed = 0.5f;
-            } else
-            {
-                noclipShiftSpeed = 0;
-            }
-
-            // Up
-            if (Input.GetKey(KeyCode.Space))
-            {
-                // Up Left
-                if (Input.GetKey(KeyCode.A))
-                {
-                    player.transform.position += player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Up Right
-                else if (Input.GetKey(KeyCode.D))
-                {
-                    player.transform.position += player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Up Forward
-                else if (Input.GetKey(KeyCode.W))
-                {
-                    player.transform.position += player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                // Up Backwards
-                else if (Input.GetKey(KeyCode.S))
-                {
-                    player.transform.position += player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                else
-                {
-                    player.transform.position += player.transform.up * (0.1f + noclipShiftSpeed);
-                }
-            }
-            // Down
-            else if (Input.GetKey(KeyCode.LeftControl))
-            {
-                // Down Left
-                if (Input.GetKey(KeyCode.A))
-                {
-                    player.transform.position -= player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Down Right
-                else if (Input.GetKey(KeyCode.D))
-                {
-                    player.transform.position -= player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Down Forward
-                else if (Input.GetKey(KeyCode.W))
-                {
-                    player.transform.position -= player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                // Down Backwards
-                else if (Input.GetKey(KeyCode.S))
-                {
-                    player.transform.position -= player.transform.up * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                else
-                {
-                    player.transform.position -= player.transform.up * (0.1f + noclipShiftSpeed);
-                }
-            }
-            // Left
-            else if (Input.GetKey(KeyCode.A))
-            {
-                // Left and Right
-                if (Input.GetKey(KeyCode.D))
-                {
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Left and Forward
-                else if (Input.GetKey(KeyCode.W))
-                {
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                // Left and Backwards
-                else if (Input.GetKey(KeyCode.S))
-                {
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                else
-                {
-                    player.transform.position -= player.transform.right * (0.1f + noclipShiftSpeed);
-                }
-            }
-            // Right
-            else if (Input.GetKey(KeyCode.D))
-            {
-                // Right and Left
-                if (Input.GetKey(KeyCode.A))
-                {
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Right and Forward
-                else if (Input.GetKey(KeyCode.W))
-                {
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                // Right and Backwards
-                else if (Input.GetKey(KeyCode.S))
-                {
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.forward * (0.07f + noclipShiftSpeed);
-                }
-                else
-                {
-                    player.transform.position += player.transform.right * (0.1f + noclipShiftSpeed);
-                }
-            }
-            // Forward
-            else if (Input.GetKey(KeyCode.W))
-            {
-                // Forward and Left
-                if (Input.GetKey(KeyCode.A))
-                {
-                    player.transform.position += player.transform.forward * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Forward and Right
-                else if (Input.GetKey(KeyCode.D))
-                {
-                    player.transform.position += player.transform.forward * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                else
-                {
-                    player.transform.position += player.transform.forward * (0.1f + noclipShiftSpeed);
-                }
-            }
-            // Backwards
-            else if (Input.GetKey(KeyCode.S))
-            {
-                // Backwards and Left
-                if (Input.GetKey(KeyCode.A))
-                {
-                    player.transform.position -= player.transform.forward * (0.07f + noclipShiftSpeed);
-                    player.transform.position -= player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                // Backwards and Right
-                else if (Input.GetKey(KeyCode.D))
-                {
-                    player.transform.position -= player.transform.forward * (0.07f + noclipShiftSpeed);
-                    player.transform.position += player.transform.right * (0.07f + noclipShiftSpeed);
-                }
-                else
-                {
-                    player.transform.position -= player.transform.forward * (0.1f + noclipShiftSpeed);
-                }
-            }
-    } else
-        {
-
-        }
     }
-
 }
