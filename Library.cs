@@ -67,6 +67,11 @@ public class Library : MelonMod
         }
         else
         {
+            // Reset values when not in a game
+            SharedData.Player = null;
+            SharedData.PlayerController = null;
+            SharedData.HasInitialized = false;
+            SharedData.CharacterController = null;
             SharedData.IsInGame = false;
         }
     }
