@@ -1,42 +1,39 @@
 ﻿using UnityEngine;
 using MelonLoader;
+using UnityEngine.UI;
 
 namespace labyrinthine_library.UI;
 
 public class UIElement : MelonMod
 {
     public GameObject? uiElement;
+    public Canvas? canvas;
 
-    public void Draw(Vector2 position, GameObject element, GameObject? parent)
+    public Canvas? Draw(Vector2 position, GameObject element, Canvas? parent)
     {
-        
+
         if (parent != null)
         {
-            uiElement = UnityEngine.Object.Instantiate(element, parent.transform);
-
-        } else
+            canvas = parent;
+        }
+        else
         {
-            Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
-
-            if (canvas == null)
-            {
-                MelonLogger.Error("No Canvas found in the scene.");
-                return;
-            }
-
-            uiElement = UnityEngine.Object.Instantiate(element, canvas.transform);
-
+            canvas = new GameObject("Labyrinthine Mod Menu").AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 999999;
+            var scaler = canvas.gameObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
 
+        uiElement = UnityEngine.Object.Instantiate(element, canvas.transform);
         RectTransform rectTransform = uiElement.GetComponent<RectTransform>();
 
         if (rectTransform != null)
         {
             rectTransform.anchoredPosition = position;
         }
-        else
-        {
-            MelonLogger.Error("No RectTransform found on the UI element.");
-        }
+
+        return canvas;
     }
 }
