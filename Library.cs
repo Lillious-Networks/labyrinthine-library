@@ -6,7 +6,7 @@ using labyrinthine_library.SharedData;
 
 namespace Labyrinthine_Library;
 
-public class LabyrinthineLibrary : MelonMod
+public class Library : MelonMod
 {
     // Create a new instance of SharedData
     public SharedData SharedData = new();
