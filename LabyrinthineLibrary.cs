@@ -26,34 +26,17 @@ public class SharedData
 
 public class LabyrinthineLibrary : MelonMod
 {
-
-    public readonly bool IsInGame = SharedData.IsInGame;
-
-    public readonly bool IsInMainMenu = SharedData.IsInMainMenu;
-
-    public readonly bool IsNoClip = SharedData.IsNoClip;
-
-    public readonly bool IsInitialized = SharedData.IsInitialized;
-
-    public readonly bool HasInitialized = SharedData.HasInitialized;
-
-    public readonly float NoclipShiftSpeed = SharedData.NoclipShiftSpeed;
-
-    public readonly GameObject? Player = SharedData.Player;
-
-    public readonly CharacterController? CharacterController = SharedData.CharacterController;
-
-    public readonly PlayerController? PlayerController = SharedData.PlayerController;
-
-    private static bool SetIsInGame (bool value) { return SharedData.IsInGame = value; }
-    private static bool SetIsInMainMenu(bool value) { return SharedData.IsInMainMenu = value; }
+    public bool GetIsInGame() { return SharedData.IsInGame; }
+    public bool GetIsInMainMenu() {  return SharedData.IsInMainMenu; }
     public bool SetIsNoClip(bool value) { return SharedData.IsNoClip = value; }
-    private static bool SetIsInitialized(bool value) { return SharedData.IsInitialized = value; }
-    private static bool SetHasInitialized(bool value) { return SharedData.HasInitialized = value; }
+    public bool GetIsNoClip() {  return SharedData.IsNoClip; }
+    public bool GetIsInitialized() { return SharedData.IsInitialized; }
+    public bool GetHasInitialized() {  return SharedData.HasInitialized; }
     public float SetNoclipShiftSpeed(float value) { return SharedData.NoclipShiftSpeed = value; }
-    private static GameObject? SetPlayer() { return SharedData.Player ?? GameObject.FindGameObjectWithTag("LocalPlayer").gameObject; }
-    private static CharacterController? SetCharacterController() { return SharedData.Player?.GetComponent<CharacterController>(); }
-    private static PlayerController? SetPlayerController() { return SharedData.Player?.GetComponent<PlayerController>(); }
+    public float GetNoclipShiftSpeed() {  return SharedData.NoclipShiftSpeed; }
+    public GameObject? GetPlayer() { return SharedData.Player; }
+    public CharacterController? GetCharacterController() { return SharedData.CharacterController; }
+    public PlayerController? GetPlayerController() { return SharedData.PlayerController; }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName) { Msg($"[SCENE LOADED] Name: {sceneName} Index: {buildIndex}"); }
 
@@ -63,28 +46,42 @@ public class LabyrinthineLibrary : MelonMod
     {
         Msg($"[SCENE INITIALIZED] Name: {sceneName} Index: {buildIndex}");
 
-        // Set the IsInitialized flag if the game has initialized
-        SetIsInitialized(sceneName == "Init" || false);
+        // Set the initialized flag once the game starts
+        if (sceneName == "Init") { SharedData.IsInitialized = true; }
 
-        // Set the isInMainMenu flag if in the main menu
-        SetIsInMainMenu(sceneName == "MainMenu" || false);
+        // Set the main menu flag accordingly
+        SharedData.IsInMainMenu = (sceneName == "MainMenu");
 
         // Maps are typically after the 5th index - does not work
+        // Trigger the in game flag and initialize other items
         // TODO: Fix
         if (buildIndex > 5)
         {
-            await Task.Delay(5000);
-            SetHasInitialized(true);
-            SetIsInGame(true);
-            if (SetPlayer() == null)
+            SharedData.IsInGame = true;
+            await Task.Delay(1000); // Required otherwise player will be null
+            GameObject? Player = GameObject.FindGameObjectWithTag("LocalPlayer").gameObject;
+
+            if (Player == null)
             {
                 Msg("Unable to locate Player object!");
-                SetHasInitialized(false);
+                // Uninitialize if we can't find the player object to prevent errors
+                SharedData.HasInitialized = false;
             } else
             {
-                SetPlayerController();
-                SetCharacterController();
+                PlayerController? PlayerController = Player.GetComponent<PlayerController>();
+                CharacterController? CharacterController = Player.GetComponent<CharacterController>();
+
+                // Assign SharedData values
+                SharedData.Player = Player;
+                SharedData.PlayerController = PlayerController;
+                SharedData.CharacterController = CharacterController;
+
+                // Initialize
+                SharedData.HasInitialized = true;
             }
+        } else
+        {
+            SharedData.IsInGame = false;
         }
     }
 
@@ -242,7 +239,7 @@ public class LabyrinthineLibrary : MelonMod
     public override void OnUpdate()
     {
         // Game has not initialized yet
-        if (!IsInitialized) return;
+        if (!SharedData.IsInitialized) return;
 
         // Disable Anti Cheat
         if (GameObject.Find("Anti-Cheat Toolkit") != null && GameObject.Find("Anti-Cheat Toolkit").activeInHierarchy)
