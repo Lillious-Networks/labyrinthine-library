@@ -6,7 +6,6 @@ namespace labyrinthine_library.UI;
 
 public class UIElement : MelonMod
 {
-    public GameObject? uiElement;
     public Canvas? canvas;
 
     public Canvas? Draw(Vector2 position, GameObject element, Canvas? parent)
@@ -26,7 +25,7 @@ public class UIElement : MelonMod
             canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
 
-        uiElement = UnityEngine.Object.Instantiate(element, canvas.transform);
+        GameObject uiElement = UnityEngine.Object.Instantiate(element, canvas.transform);
         RectTransform rectTransform = uiElement.GetComponent<RectTransform>();
 
         if (rectTransform != null)
