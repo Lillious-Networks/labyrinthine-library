@@ -42,7 +42,7 @@ public class Library : MelonMod
         if (buildIndex > 5)
         {
             SharedData.IsInGame = true;
-            await Task.Delay(1000); // Required otherwise player will be null
+            await Task.Delay(5000); // Required otherwise player will be null
             GameObject? Player = GameObject.FindGameObjectWithTag("LocalPlayer").gameObject;
 
             if (Player == null)
