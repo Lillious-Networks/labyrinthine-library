@@ -1,8 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Reflection;
-using Labyrinthine_Library;
 using MelonLoader;
-using System.Runtime.CompilerServices;
+using labyrinthine_library;
 
 [assembly: MelonInfo(typeof(Library), "Labyrinthine Library", "1.0.0", "Lillious & .Zer0", null)]
 [assembly: MelonGame("Valko Game Studios", "Labyrinthine")]

@@ -2,22 +2,22 @@
 using UnityEngine;
 using static MelonLoader.MelonLogger;
 using Il2Cpp;
-using labyrinthine_library.SharedData;
+using labyrinthine_library.Shared;
 
-namespace Labyrinthine_Library;
+namespace labyrinthine_library;
 
 public class Library : MelonMod
 {
     // Create a new instance of SharedData
     public SharedData SharedData = new();
     public bool GetIsInGame() { return SharedData.IsInGame; }
-    public bool GetIsInMainMenu() {  return SharedData.IsInMainMenu; }
+    public bool GetIsInMainMenu() { return SharedData.IsInMainMenu; }
     public bool SetIsNoClip(bool value) { return SharedData.IsNoClip = value; }
-    public bool GetIsNoClip() {  return SharedData.IsNoClip; }
+    public bool GetIsNoClip() { return SharedData.IsNoClip; }
     public bool GetIsInitialized() { return SharedData.IsInitialized; }
-    public bool GetHasInitialized() {  return SharedData.HasInitialized; }
+    public bool GetHasInitialized() { return SharedData.HasInitialized; }
     public float SetNoclipShiftSpeed(float value) { return SharedData.NoclipShiftSpeed = value; }
-    public float GetNoclipShiftSpeed() {  return SharedData.NoclipShiftSpeed; }
+    public float GetNoclipShiftSpeed() { return SharedData.NoclipShiftSpeed; }
     public GameObject? GetPlayer() { return SharedData.Player; }
     public CharacterController? GetCharacterController() { return SharedData.CharacterController; }
     public PlayerController? GetPlayerController() { return SharedData.PlayerController; }
@@ -34,7 +34,7 @@ public class Library : MelonMod
         if (sceneName == "Init") { SharedData.IsInitialized = true; }
 
         // Set the main menu flag accordingly
-        SharedData.IsInMainMenu = (sceneName == "MainMenu");
+        SharedData.IsInMainMenu = sceneName == "MainMenu";
 
         // Maps are typically after the 5th index - does not work
         // Trigger the in game flag and initialize other items
@@ -50,7 +50,8 @@ public class Library : MelonMod
                 Msg("Unable to locate Player object!");
                 // Uninitialize if we can't find the player object to prevent errors
                 SharedData.HasInitialized = false;
-            } else
+            }
+            else
             {
                 PlayerController? PlayerController = Player.GetComponent<PlayerController>();
                 CharacterController? CharacterController = Player.GetComponent<CharacterController>();
@@ -63,7 +64,8 @@ public class Library : MelonMod
                 // Initialize
                 SharedData.HasInitialized = true;
             }
-        } else
+        }
+        else
         {
             SharedData.IsInGame = false;
         }
