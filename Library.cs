@@ -39,7 +39,7 @@ public class Library : MelonMod
         // Maps are typically after the 5th index - does not work
         // Trigger the in game flag and initialize other items
         // TODO: Fix
-        if (buildIndex > 5)
+        if (buildIndex > 5 || sceneName == "Zone 1")
         {
             SharedData.IsInGame = true;
             await Task.Delay(5000); // Required otherwise player will be null
