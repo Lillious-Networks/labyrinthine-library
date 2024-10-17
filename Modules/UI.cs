@@ -17,7 +17,8 @@ public class UIElement : MelonMod
         }
         else
         {
-            canvas = new GameObject("Labyrinthine Mod Menu").AddComponent<Canvas>();
+            // Use a GUID to prevent duplicate names
+            canvas = new GameObject("Labyrinthine - Canvas " + Guid.NewGuid()).AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 999999;
             var scaler = canvas.gameObject.AddComponent<CanvasScaler>();
