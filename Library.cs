@@ -3,13 +3,13 @@ using UnityEngine;
 using Il2Cpp;
 using labyrinthine_library.Shared;
 using static MelonLoader.MelonLogger;
-
 namespace labyrinthine_library;
 
 public class Library : MelonMod
 {
     // Create a new instance of SharedData
     public SharedData SharedData = new();
+
     public bool GetIsInGame() { return SharedData.IsInGame; }
     public bool GetIsInMainMenu() { return SharedData.IsInMainMenu; }
     public bool SetIsNoClip(bool value) { return SharedData.IsNoClip = value; }
@@ -80,5 +80,12 @@ public class Library : MelonMod
     {
         // Game has not initialized yet
         if (!SharedData.IsInitialized) return;
+
+        // Disable anti-cheat toolkit
+        if (GameObject.Find("Anti-Cheat Toolkit") != null && GameObject.Find("Anti-Cheat Toolkit").activeInHierarchy)
+        {
+            Msg("Anti Cheat Disabled!");
+            GameObject.Find("Anti-Cheat Toolkit").SetActive(false);
+        }
     }
 }
