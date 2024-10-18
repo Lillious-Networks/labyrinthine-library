@@ -1,5 +1,5 @@
-﻿using MelonLoader;
-using UnityEngine;
+﻿using UnityEngine;
+using MelonLoader;
 using Il2Cpp;
 using labyrinthine_library.Shared;
 using static MelonLoader.MelonLogger;
