@@ -108,21 +108,6 @@ jobs:
               </dependencies>
             </metadata>
             <files>
-              <file src="bin\Release\net6.0\labyrinthine-library.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\Assembly-CSharp.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\Il2CppInterop.Runtime.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\Il2Cppmscorlib.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\Unity.TextMeshPro.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.CoreModule.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.InputLegacyModule.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.InputModule.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.PhysicsModule.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\Il2CppMirror.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.AIModule.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.UI.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.UIElementsModule.dll" target="Dependencies"/>
-              <file src="bin\Release\net6.0\UnityEngine.UIModule.dll" target="Dependencies"/>
               <file src="bin\Release\net6.0\" target="Dependencies"/>
               <file src="README.md" target="."/>
               <file src="releasenotes.txt" target="."/>
