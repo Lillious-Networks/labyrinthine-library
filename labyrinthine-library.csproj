@@ -7,9 +7,15 @@
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;Obfuscar</Configurations>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Obfuscar|AnyCPU'">
+    <Optimize>False</Optimize>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Obfuscar|x64'">
     <Optimize>False</Optimize>
     <DebugType>none</DebugType>
   </PropertyGroup>
@@ -18,35 +24,44 @@
     <DebugType>none</DebugType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>none</DebugType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="LavaGang.MelonLoader" Version="0.6.5" />
-    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.2" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
   </ItemGroup>
+
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>Dependencies\0Harmony.dll</HintPath>
-    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>Dependencies\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Il2CppInterop.Runtime">
       <HintPath>Dependencies\Il2CppInterop.Runtime.dll</HintPath>
     </Reference>
+    <Reference Include="Il2CppMirror">
+      <HintPath>Dependencies\Il2CppMirror.dll</HintPath>
+    </Reference>
     <Reference Include="Il2Cppmscorlib">
       <HintPath>Dependencies\Il2Cppmscorlib.dll</HintPath>
-    </Reference>
-    <Reference Include="MelonLoader">
-      <HintPath>Dependencies\MelonLoader.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>Dependencies\Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>Dependencies\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <HintPath>Dependencies\UnityEngine.AIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>Dependencies\UnityEngine.CoreModule.dll</HintPath>
@@ -65,9 +80,6 @@
     </Reference>
     <Reference Include="UnityEngine.UIElementsModule">
       <HintPath>Dependencies\UnityEngine.UIElementsModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UIElementsNativeModule">
-      <HintPath>Dependencies\UnityEngine.UIElementsNativeModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>Dependencies\UnityEngine.UIModule.dll</HintPath>

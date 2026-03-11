@@ -1,0 +1,191 @@
+name: Build and Package
+on:
+  workflow_dispatch:
+    # Manual version override
+    inputs:
+      version:
+        description: "Version number (e.g. 1.0.0)"
+        required: false
+  push:
+    branches:
+      - master
+      - beta
+    paths:
+      - 'libs/**'
+      - "**.csproj"
+      - "**.sln"
+      - "**.cs"
+
+jobs:
+  generate-build-number:
+    name: Generate Build Number 🔢
+    runs-on: windows-latest
+    outputs:
+      version: ${{ (inputs.version || steps.generate-build-number.outputs.version) }}
+    steps:
+      - name: Generate Build Number 🔢
+        if: ${{ !inputs.version }}
+        id: generate-build-number
+        run: |
+          $buildNumber = "1.0.${{ github.run_number }}"
+          echo "version=$buildNumber" >> $env:GITHUB_OUTPUT
+
+  get-latest-version:
+    name: Get Latest Version 🔢
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.get-latest-version.outputs.version }}
+    steps:
+      - name: Get Latest Version 🔢
+        id: get-latest-version
+        run: |
+          $response = nuget search "LabyrinthineLibrary" -Source https://api.nuget.org/v3/index.json
+
+          # Extract the version from the response
+          $version = ($response | Select-String -Pattern '\|\s([\d\.]+)\s\|' ).Matches.Groups[1].Value
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+  build:
+    name: "Build ${{ needs.generate-build-number.outputs.version }}${{ github.ref_name == 'beta' && ' (Beta)' || '' }} Release 🏗️🔗"
+    needs: [generate-build-number, get-latest-version]
+    concurrency:
+      group: build
+      cancel-in-progress: true
+    runs-on: windows-2025
+    steps:
+      - name: Checkout code 🛒🔗
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Nuget Restore dependencies 🛠️🔗
+        run: nuget restore labyrinthine-library.sln
+
+      - name: Build 🏗️🔗
+        working-directory: .
+        run: dotnet build -c Release
+
+      - name: Create Nuget package Metadata 📝🍗
+        shell: pwsh
+        run: |
+          $releaseNotes = Get-Content -Path "releasenotes.txt" -Raw
+          $nuspecContent = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <package>
+            <metadata>
+              <id>LabyrinthineLibrary</id>
+              <version>${{ needs.generate-build-number.outputs.version }}</version>
+              <title>Labyrinthine Modding Framework</title>
+              <readme>README.md</readme>
+              <authors>Lillious</authors>
+              <owners>Lillious</owners>
+              <requireLicenseAcceptance>false</requireLicenseAcceptance>
+              <license type="expression">Apache-2.0</license>
+              <description>A modding framework for Labyrinthine</description>
+              <releaseNotes>$releaseNotes</releaseNotes>
+              <copyright>Copyright © 2026</copyright>
+              <tags></tags>
+              <dependencies>
+                <dependency id="LavaGang.MelonLoader" version="0.7.2" />
+                <dependency id="Lib.Harmony" version="2.4.2" />
+              </dependencies>
+            </metadata>
+            <files>
+              <file src="bin\Release\net6.0\labyrinthine-library.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\Assembly-CSharp.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\Il2CppInterop.Runtime.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\Il2Cppmscorlib.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\Unity.TextMeshPro.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.CoreModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.InputLegacyModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.InputModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.PhysicsModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\Il2CppMirror.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.AIModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.UI.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.UIElementsModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\UnityEngine.UIModule.dll" target="Dependencies"/>
+              <file src="bin\Release\net6.0\" target="Dependencies"/>
+              <file src="README.md" target="."/>
+              <file src="releasenotes.txt" target="."/>
+            </files>
+          </package>
+          "@
+
+          $nuspecContent | Out-File -Encoding utf8 -FilePath "Labyrinthine_Library.nuspec"
+
+
+      - name: Create Nexus package 📦
+        run: |
+          Compress-Archive -Path "bin\Release\net6.0\labyrinthine-library.dll" -DestinationPath "Nexus-Labyrinthine-Library-Package-${{ needs.generate-build-number.outputs.version }}.zip"
+
+      - name: Package Nuspec Metadata 📦
+        run: nuget pack Labyrinthine_Library.nuspec -OutputDirectory .
+
+      - name: Publish Nuget Package 🚀
+        if: ${{ github.ref_name == 'master' }} # Only publish to nuget if not a beta release
+        run: |
+          nuget push LabyrinthineLibrary.${{ needs.generate-build-number.outputs.version }}.nupkg -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.NUGET_API_KEY }} -SkipDuplicate
+
+      - name: Set up Git 🛠️
+        run: |
+          git config --global user.email "github@lilliousnetworks.com"
+          git config --global user.name "Logan Brown"
+
+      - name: Create GitHub Release 🚀
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.generate-build-number.outputs.version }}
+          name: Release v${{ needs.generate-build-number.outputs.version }}${{ github.ref_name == 'beta' && ' (Beta)' || '' }}
+          files: |
+            LabyrinthineLibrary.${{ needs.generate-build-number.outputs.version }}.nupkg
+            bin\Release\net6.0\labyrinthine-library.dll
+            Nexus-Labyrinthine-Library-Package-${{ needs.generate-build-number.outputs.version }}.zip
+          make_latest: ${{ github.ref_name == 'master' }}
+          prerelease: ${{ github.ref_name == 'beta' }}
+          target_commitish: ${{ github.sha }}
+          body_path: releasenotes.txt
+
+      - name: Delete Previous Version 🗑️
+        if: ${{ github.ref_name == 'master' }}
+        run: |
+          # Wait for the package to be indexed and verified by nuget
+          # This is a workaround for the fact that nuget doesn't always index packages immediately
+          # and we need to wait for it to be available before we can delete the previous version
+          # 60 attempts * 60 seconds = 3600 seconds = 1 hour
+
+          $maxAttempts = 60
+          $delaySeconds = 60
+          $attempt = 1
+          $success = $false
+
+          Write-Host "Starting installation attempts for LabyrinthineLibrary v${{ needs.generate-build-number.outputs.version}}..."
+
+          while (-not $success -and $attempt -le $maxAttempts) {
+              Write-Host "`nAttempt $attempt of $maxAttempts"
+              try {
+                  & nuget install LabyrinthineLibrary -Version ${{ needs.generate-build-number.outputs.version }} -NonInteractive
+                  if ($LASTEXITCODE -eq 0) {
+                      $success = $true
+                      Write-Host "`nSuccess! Package installed on attempt $attempt"
+                  } else {
+                      throw "NuGet command failed with exit code $LASTEXITCODE"
+                  }
+              } catch {
+                  Write-Host "Attempt $attempt failed: $_"
+                  if ($attempt -lt $maxAttempts) {
+                      Write-Host "Waiting $delaySeconds seconds before next attempt..."
+                      Start-Sleep -Seconds $delaySeconds
+                  }
+                  $attempt++
+              }
+          }
+
+          if (-not $success) {
+              Write-Host "`nNot deleting previous version because the latest version was not verified by nuget after $maxAttempts attempts."
+              exit 1
+          } else {
+              Write-Host "`nDeleting previous version..."
+              nuget delete LabyrinthineLibrary ${{ needs.get-latest-version.outputs.version }} -Source https://api.nuget.org/v3/index.json -ApiKey ${{ secrets.NUGET_API_KEY }} -NonInteractive
+          }

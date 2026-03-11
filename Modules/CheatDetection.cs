@@ -2,9 +2,9 @@
 using MelonLoader;
 using HarmonyLib;
 
-namespace labyrinthine_library.CheatDetection;
+namespace labyrinthine_library.Modules;
 
-internal class CheatDetection : MelonMod
+internal class CheatDetection
 {
     [HarmonyPatch(typeof(CheatingDetector), "isCheating")]
     private static class Patch_CheatDetection
@@ -21,6 +21,8 @@ internal class CheatDetection : MelonMod
     {
         public static bool PostFix(ref bool __result)
         {
+            MelonLogger.Msg("Patched CheatingDetector.CheatingDetected");
+
             __result = false;
             return false;
         }
