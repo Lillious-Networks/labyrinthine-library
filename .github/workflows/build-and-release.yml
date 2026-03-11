@@ -38,12 +38,29 @@ jobs:
     steps:
       - name: Get Latest Version 🔢
         id: get-latest-version
+        shell: pwsh
         run: |
-          $response = nuget search "LabyrinthineLibrary" -Source https://api.nuget.org/v3/index.json
+          try {
+              $response = nuget search "LabyrinthineLibrary" -Source https://api.nuget.org/v3/index.json
 
-          # Extract the version from the response
-          $version = ($response | Select-String -Pattern '\|\s([\d\.]+)\s\|' ).Matches.Groups[1].Value
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+              # Extract the version from the response
+              $match = $response | Select-String -Pattern '\|\s([\d\.]+)\s\|'
+
+              if ($match -and $match.Matches.Count -gt 0) {
+                  $version = $match.Matches[0].Groups[1].Value
+                  Write-Host "Found existing version: $version"
+              } else {
+                  # Package doesn't exist yet, use 1.0.0 as default for first release
+                  $version = "1.0.0"
+                  Write-Host "Package not found on NuGet, using default version: $version"
+              }
+
+              echo "version=$version" >> $env:GITHUB_OUTPUT
+          } catch {
+              Write-Host "Error getting latest version: $_"
+              # Default to 1.0.0 if search fails (first release scenario)
+              echo "version=1.0.0" >> $env:GITHUB_OUTPUT
+          }
 
   build:
     name: "Build ${{ needs.generate-build-number.outputs.version }}${{ github.ref_name == 'beta' && ' (Beta)' || '' }} Release 🏗️🔗"
