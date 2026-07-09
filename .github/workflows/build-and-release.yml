@@ -86,6 +86,10 @@ jobs:
         shell: pwsh
         run: |
           $releaseNotes = Get-Content -Path "releasenotes.txt" -Raw
+
+          $dllFiles = Get-ChildItem -Path "bin\Release\net6.0" -Filter "*.dll" | Where-Object { $_.Name -ne "labyrinthine-library.dll" }
+          $dependencyFileEntries = ($dllFiles | ForEach-Object { "      <file src=`"bin\Release\net6.0\$($_.Name)`" target=`"Dependencies`" />" }) -join "`n"
+
           $nuspecContent = @"
           <?xml version="1.0" encoding="utf-8"?>
           <package>
@@ -108,9 +112,11 @@ jobs:
               </dependencies>
             </metadata>
             <files>
-              <file src="bin\Release\net6.0\" target="Dependencies"/>
-              <file src="README.md" target="."/>
-              <file src="releasenotes.txt" target="."/>
+              <file src="bin\Release\net6.0\labyrinthine-library.dll" target="lib\net6.0" />
+              <file src="bin\Release\net6.0\labyrinthine-library.deps.json" target="lib\net6.0" />
+          $dependencyFileEntries
+              <file src="README.md" target="." />
+              <file src="releasenotes.txt" target="." />
             </files>
           </package>
           "@
