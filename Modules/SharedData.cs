@@ -1,5 +1,4 @@
 ﻿using Il2Cpp;
-using Il2CppRandomGeneration.Contracts;
 using UnityEngine;
 
 namespace labyrinthine_library.Modules;
@@ -14,7 +13,7 @@ public class SharedData
     public static bool IsInLoadingScreen { get; set; }
     public static ToastNotification? Toast { get; set; }
     public static GameObject? Player { get; set; }
-    public static GameObject[]? Players { get; set; }
+    public static List<PlayerNetworkSync>? Players { get; set; }
     public static CharacterController? CharacterController { get; set; }
     public static PlayerController? PlayerController { get; set; }
 }

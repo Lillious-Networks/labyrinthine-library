@@ -1,10 +1,8 @@
 ﻿using Il2CppValkoGames.Labyrinthine.Saves;
 using Il2CppValkoGames.Labyrinthine.Store;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 namespace labyrinthine_library.Modules;
 
-// Completed
 
 public enum CurrencyType
 {
@@ -15,7 +13,6 @@ public enum CurrencyType
 
 public class Currency
 {
-    private static StoreNetworkSync? Store = null; // Cache StoreNetworkSync object
     public static int Increase(CurrencyType currency, int amount)
     {
         if (currency == CurrencyType.Tickets)
@@ -92,13 +89,22 @@ public class Currency
 
     public static void DonateCurrency(int amount)
     {
-        // Must be in lobby where Store Network Sync is available
-        if (!Library.IsInLobby()) return;
-        // Attempt to assign store if undefined
-        if (Store == null) Store = GameObject.Find("- Store Network Sync")?.GetComponent<StoreNetworkSync>();
-        if (Store == null) return; // Could not find store after attempt
+        GameObject Store = GameObject.Find("- Store Network Sync");
+        if (Store == null)
+        {
+            Logs.Error("Unable to locate store. Are you in the game lobby?");
+            return;
+        }
+
+        StoreNetworkSync StoreNetwork = Store.GetComponent<StoreNetworkSync>();
+
         // Host only
-        if (!Store.authority) return;
-        Store.DonateCurrencyToHost(amount);
+        if (!StoreNetwork.authority)
+        {
+            Logs.Error("You do not have permission to donate currency. Are you the host?");
+            return;
+        }
+
+        StoreNetwork.DonateCurrencyToHost(amount);
     }
 }

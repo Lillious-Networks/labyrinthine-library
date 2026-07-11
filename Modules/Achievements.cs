@@ -1,8 +1,6 @@
 ﻿using Il2Cpp;
 namespace labyrinthine_library.Modules;
 
-// Completed
-
 public class Achievements
 {
     public static void Add (EAchievement achievement)
@@ -21,5 +19,18 @@ public class Achievements
         {
             Add(achievement);
         }
+    }
+
+    public static void ServerUnlockAll(PlayerNetworkSync playerNetworkSync)
+    {
+        foreach (var achievement in List())
+        {
+            ServerAdd(playerNetworkSync, achievement);
+        }
+    }
+
+    public static void ServerAdd(PlayerNetworkSync playerNetworkSync, EAchievement achievement)
+    {
+        playerNetworkSync.ServerUnlockAchievement(achievement);
     }
 }

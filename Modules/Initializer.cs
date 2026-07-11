@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Il2Cpp;
 using MelonLoader;
+using System.Collections;
 
 namespace labyrinthine_library.Modules;
 
@@ -8,16 +9,48 @@ public class Initializer
 {
     public SharedData SharedData = new();
     private readonly static ToastNotification Toast = new();
-    private static bool LoadedMessage = false;
+    private static bool Loaded = false;
+    private static bool CoroutineStarted = false;
+    private static readonly Dictionary<string, bool> PlayerDeathState = new();
+
+    public static IEnumerator MonitorPlayers()
+    {
+        while (SharedData.IsInGame)
+        {
+            if (SharedData.Players != null)
+            {
+                for (int i = 0; i < SharedData.Players.Count; i++)
+                {
+                    var player = SharedData.Players[i];
+                    if (player == null)
+                        continue;
+
+                    string key = player.name;
+                    bool wasDead = PlayerDeathState.TryGetValue(key, out bool prev) && prev;
+
+                    if (player.isDead && !wasDead)
+                    {
+                        Events.Instance.InvokePlayerDeath(player);
+                    }
+
+                    PlayerDeathState[key] = player.isDead;
+                }
+            }
+
+            yield return new WaitForSeconds(1f);
+        }
+
+        CoroutineStarted = false;
+        PlayerDeathState.Clear();
+    }
 
     // Controls the initialization of the shared data
     public static async Task OnSceneWasInitialized(int buildIndex, string sceneName)
     {
 
-        MelonLogger.Msg($"Initialized {sceneName} at index: {buildIndex}");
-
         // Initialize the shared data when the "Init" scene is loaded
-        if (sceneName == "Init") {
+        if (sceneName == "Init")
+        {
             SharedData.IsInitialized = true;
             SharedData.Toast = Toast;
         };
@@ -43,71 +76,68 @@ public class Initializer
             SharedData.PlayerController = null;
             SharedData.HasInitialized = false;
             SharedData.IsInLoadingScreen = false;
+            CoroutineStarted = false;
         }
-
-        // TESTING START
-
-        if (SharedData.IsInMainMenu)
-        {
-            Levels.Set(1337);
-        }
-
-        // TESTING END
 
 
         // Player is in game if the build index is greater than 5 (assuming build index 0-5 are non-game scenes)
         if (buildIndex > 6 && !SharedData.IsInLobby && !SharedData.IsInMainMenu) { SharedData.IsInGame = true; }
 
-        if (SharedData.IsInMainMenu && !LoadedMessage)
+        if (SharedData.IsInMainMenu && !Loaded)
         {
-            SharedData.Toast?.Show($"Loaded Labyrinthine Library", ToastType.Success);
-            LoadedMessage = true;
+            Logs.Info("Loaded Labyrinthine Library");
+            Loaded = true;
         }
 
         if (SharedData.IsInGame && !SharedData.IsInLoadingScreen)
         {
-            SharedData.Toast?.Show($"Entered game scene: {sceneName}", ToastType.Info);
+            Logs.Info($"Entered game scene: {sceneName}");
         }
 
-        // Set up a loop to check for the player object and its components when in game
-        if (SharedData.IsInGame)
+        if (SharedData.IsInGame && !CoroutineStarted)
         {
-            // Wait at least 1 second to allow the player object to be created
+            CoroutineStarted = true;
             await Task.Delay(1000);
 
-            // We only need to check if the player object is referenced
             while (SharedData.Player == null)
             {
-                // Find the player object by its tag
-                GameObject? Player = GameObject.FindGameObjectWithTag("LocalPlayer")?.gameObject;
-                PlayerControl[]? playerComponents = UnityEngine.Object.FindObjectsOfType<PlayerControl>();
-                GameObject[]? Players = new GameObject[playerComponents.Length];
+                GameObject player = Il2Cpp.GameManager.instance.mainPlayer;
 
-                for (int i = 0; i < playerComponents.Length; i++)
+                if (player != null)
                 {
-                    Players[i] = playerComponents[i].gameObject;
+                    SharedData.Player = player;
+                    SharedData.CharacterController = player.GetComponent<CharacterController>();
+                    SharedData.PlayerController = player.GetComponent<PlayerController>();
+                    SharedData.HasInitialized = true;
                 }
-
-                SharedData.Players = Players;
-
-                if (Player != null)
+                else
                 {
-                    // Set references to the player and its components in the shared data
-                    SharedData.Player = Player;
-                    SharedData.CharacterController = Player.GetComponent<CharacterController>();
-                    SharedData.PlayerController = Player.GetComponent<PlayerController>();
+                    Logs.Warning("Unable to locate main player in game. Trying again...");
+                    await Task.Delay(500);
+                }
+            }
 
-                    // If we successfully found the player and its components, we can mark initialization as complete
-                    if (SharedData.Player != null)
+            while (SharedData.Players == null && SharedData.IsInGame)
+            {
+                var players = Il2Cpp.GameManager.instance.Players;
+
+                if (players != null)
+                {
+                    SharedData.Players = new List<PlayerNetworkSync>(players.Count);
+
+                    for (int i = 0; i < players.Count; i++)
                     {
-                        SharedData.HasInitialized = true;
-                        break;
+                        SharedData.Players.Add(players[i]);
                     }
+
+                    MelonCoroutines.Start(MonitorPlayers());
                 }
-                 // Wait a short time before checking again to avoid excessive CPU usage
-                 await Task.Delay(500);
+                else
+                {
+                    Logs.Warning("Unable to fetch players in game. Trying again...");
+                    await Task.Delay(500);
+                }
             }
         }
     }
-
 }
